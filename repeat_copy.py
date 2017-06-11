@@ -350,7 +350,8 @@ class RepeatCopy(snt.AbstractModule):
 				for i in range(batch_size)
 		]
 		residual_mask_pad = [
-				tf.zeros([residual_length_batch[i]]) for i in range(batch_size)
+				tf.zeros([residual_length_batch[i]])
+				for i in range(batch_size)
 		]
 
 		# Concatenate the pad to each batch element.
