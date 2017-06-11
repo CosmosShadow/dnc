@@ -170,34 +170,29 @@ class MemoryAccess(snt.RNNCore):
 		write_vectors = _linear(self._num_writes, self._word_size, 'write_vectors')
 
 		# e_t^i - Amount to erase the memory by before writing, for each write head.
-		erase_vectors = _linear(self._num_writes, self._word_size, 'erase_vectors',
-														tf.sigmoid)
+		erase_vectors = _linear(self._num_writes, self._word_size, 'erase_vectors', tf.sigmoid)
 
 		# f_t^j - Amount that the memory at the locations read from at the previous
 		# time step can be declared unused, for each read head `j`.
-		free_gate = tf.sigmoid(
-				snt.Linear(self._num_reads, name='free_gate')(inputs))
+		free_gate = tf.sigmoid(snt.Linear(self._num_reads, name='free_gate')(inputs))
 
 		# g_t^{a, i} - Interpolation between writing to unallocated memory and
 		# content-based lookup, for each write head `i`. Note: `a` is simply used to
 		# identify this gate with allocation vs writing (as defined below).
-		allocation_gate = tf.sigmoid(
-				snt.Linear(self._num_writes, name='allocation_gate')(inputs))
+		allocation_gate = tf.sigmoid(snt.Linear(self._num_writes, name='allocation_gate')(inputs))
 
 		# g_t^{w, i} - Overall gating of write amount for each write head.
-		write_gate = tf.sigmoid(
-				snt.Linear(self._num_writes, name='write_gate')(inputs))
+		write_gate = tf.sigmoid(snt.Linear(self._num_writes, name='write_gate')(inputs))
 
 		# \pi_t^j - Mixing between "backwards" and "forwards" positions (for
 		# each write head), and content-based lookup, for each read head.
 		num_read_modes = 1 + 2 * self._num_writes
 		read_mode = snt.BatchApply(tf.nn.softmax)(
-				_linear(self._num_reads, num_read_modes, name='read_mode'))
+		                           _linear(self._num_reads, num_read_modes, name='read_mode'))
 
 		# Parameters for the (read / write) "weights by content matching" modules.
 		write_keys = _linear(self._num_writes, self._word_size, 'write_keys')
-		write_strengths = snt.Linear(self._num_writes, name='write_strengths')(
-				inputs)
+		write_strengths = snt.Linear(self._num_writes, name='write_strengths')(inputs)
 
 		read_keys = _linear(self._num_reads, self._word_size, 'read_keys')
 		read_strengths = snt.Linear(self._num_reads, name='read_strengths')(inputs)
@@ -252,8 +247,9 @@ class MemoryAccess(snt.RNNCore):
 			write_gate = tf.expand_dims(inputs['write_gate'], -1)
 
 			# w_t^{w, i} - The write weightings for each write head.
-			return write_gate * (allocation_gate * write_allocation_weights +
-													 (1 - allocation_gate) * write_content_weights)
+			return write_gate * (
+			                     allocation_gate * write_allocation_weights + 
+			                     (1 - allocation_gate) * write_content_weights)
 
 	def _read_weights(self, inputs, memory, prev_read_weights, link):
 		"""Calculates read weights for each read head.
@@ -290,13 +286,12 @@ class MemoryAccess(snt.RNNCore):
 					link, prev_read_weights, forward=False)
 
 			backward_mode = inputs['read_mode'][:, :, :self._num_writes]
-			forward_mode = (
-					inputs['read_mode'][:, :, self._num_writes:2 * self._num_writes])
+			forward_mode = inputs['read_mode'][:, :, self._num_writes:2 * self._num_writes]
 			content_mode = inputs['read_mode'][:, :, 2 * self._num_writes]
 
 			read_weights = (
-					tf.expand_dims(content_mode, 2) * content_weights + tf.reduce_sum(
-							tf.expand_dims(forward_mode, 3) * forward_weights, 2) +
+					tf.expand_dims(content_mode, 2) * content_weights + 
+					tf.reduce_sum(tf.expand_dims(forward_mode, 3) * forward_weights, 2) +
 					tf.reduce_sum(tf.expand_dims(backward_mode, 3) * backward_weights, 2))
 
 			return read_weights

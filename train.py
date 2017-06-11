@@ -83,9 +83,9 @@ def train(num_training_iterations, report_interval):
 	"""Trains the DNC and periodically reports the loss."""
 
 	dataset = repeat_copy.RepeatCopy(
-	                                 FLAGS.num_bits, FLAGS.batch_size,
-	                                 FLAGS.min_length, FLAGS.max_length,
-	                                 FLAGS.min_repeats, FLAGS.max_repeats)
+			FLAGS.num_bits, FLAGS.batch_size,
+			FLAGS.min_length, FLAGS.max_length,
+			FLAGS.min_repeats, FLAGS.max_repeats)
 	dataset_tensors = dataset()
 
 	output_logits = run_model(dataset_tensors.observations, dataset.target_size)
@@ -99,12 +99,12 @@ def train(num_training_iterations, report_interval):
 	grads, _ = tf.clip_by_global_norm(tf.gradients(train_loss, trainable_variables), FLAGS.max_grad_norm)
 
 	global_step = tf.get_variable(
-	                              name="global_step",
-	                              shape=[],
-	                              dtype=tf.int64,
-	                              initializer=tf.zeros_initializer(),
-	                              trainable=False,
-	                              collections=[tf.GraphKeys.GLOBAL_VARIABLES, tf.GraphKeys.GLOBAL_STEP])
+			name="global_step",
+			shape=[],
+			dtype=tf.int64,
+			initializer=tf.zeros_initializer(),
+			trainable=False,
+			collections=[tf.GraphKeys.GLOBAL_VARIABLES, tf.GraphKeys.GLOBAL_STEP])
 
 	optimizer = tf.train.RMSPropOptimizer(FLAGS.learning_rate, epsilon=FLAGS.optimizer_epsilon)
 	train_step = optimizer.apply_gradients(zip(grads, trainable_variables), global_step=global_step)
